@@ -1,0 +1,29 @@
+
+
+type Campeonatos {
+    id: ID!
+    nome: String!
+    pais: Pais
+    etapas: [Etapas]
+} 
+
+type Tipos {
+    id: ID!
+    nome: String!
+    multiplo: Float!
+}
+
+type Etapas {
+    id: ID!
+    nome: String!
+    tipos: Tipos
+    data: String!
+    video: String!
+    resultados: [Resultado_etapas]
+}
+
+type Resultado_etapas {
+    id: ID!
+    piloto: Pilotos
+    posicao: Int!
+}

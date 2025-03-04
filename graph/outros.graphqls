@@ -1,0 +1,40 @@
+type Pais {
+    id: ID!
+    nome: String!
+    bandeira: String!
+}
+
+input FiltrosPilotos {
+    id: ID
+    nome: String
+    pais: ID
+    numero: Int
+    equipe: ID
+    status: String
+}
+
+input FiltrosEtapas {
+    id: ID
+    nome: String
+    campeonato: ID
+    tipos: ID
+}
+
+input FiltrosEquipes {
+    id: ID
+    nome: String
+    pais: ID
+    moto: ID
+    campeonato: ID
+}
+
+input FiltrosMotos {
+    id: ID
+    nome: String
+}
+
+input FiltrosCampeonatos {
+    id: ID
+    nome: String
+    pais: ID
+}

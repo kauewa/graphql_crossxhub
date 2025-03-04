@@ -2,25 +2,107 @@
 
 package model
 
-type Mutation struct {
+
+type Campeonatos struct {
+	ID     string    `json:"id"`
+	Nome   string    `json:"nome"`
+	Pais   *Pais     `json:"pais,omitempty"`
+	Etapas []*Etapas `json:"etapas,omitempty"`
 }
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+type Equipes struct {
+	ID         string       `json:"id"`
+	Nome       string       `json:"nome"`
+	Moto       *Motos       `json:"moto,omitempty"`
+	Pais       *Pais        `json:"pais,omitempty"`
+	Campeonato *Campeonatos `json:"campeonato,omitempty"`
+}
+
+type Etapas struct {
+	ID         string             `json:"id"`
+	Nome       string             `json:"nome"`
+	Tipos      *Tipos             `json:"tipos,omitempty"`
+	Data       string             `json:"data"`
+	Video      string             `json:"video"`
+	Resultados []*ResultadoEtapas `json:"resultados,omitempty"`
+}
+
+type FiltrosCampeonatos struct {
+	ID   *string `json:"id,omitempty"`
+	Nome *string `json:"nome,omitempty"`
+	Pais *string `json:"pais,omitempty"`
+}
+
+type FiltrosEquipes struct {
+	ID         *string `json:"id,omitempty"`
+	Nome       *string `json:"nome,omitempty"`
+	Pais       *string `json:"pais,omitempty"`
+	Moto       *string `json:"moto,omitempty"`
+	Campeonato *string `json:"campeonato,omitempty"`
+}
+
+type FiltrosEtapas struct {
+	ID         *string `json:"id,omitempty"`
+	Nome       *string `json:"nome,omitempty"`
+	Campeonato *string `json:"campeonato,omitempty"`
+	Tipos      *string `json:"tipos,omitempty"`
+}
+
+type FiltrosMotos struct {
+	ID   *string `json:"id,omitempty"`
+	Nome *string `json:"nome,omitempty"`
+}
+
+type FiltrosPilotos struct {
+	ID     *string `json:"id,omitempty"`
+	Nome   *string `json:"nome,omitempty"`
+	Pais   *string `json:"pais,omitempty"`
+	Numero *int32  `json:"numero,omitempty"`
+	Equipe *string `json:"equipe,omitempty"`
+	Status *string `json:"status,omitempty"`
+}
+
+type Motos struct {
+	ID   string `json:"id"`
+	Nome string `json:"nome"`
+	Foto string `json:"foto"`
+}
+
+type Pais struct {
+	ID       string `json:"id"`
+	Nome     string `json:"nome"`
+	Bandeira string `json:"bandeira"`
+}
+
+type Pilotos struct {
+	ID                  string   `json:"id"`
+	Nome                string   `json:"nome"`
+	Equipe              *Equipes `json:"equipe,omitempty"`
+	Pais                *Pais    `json:"pais,omitempty"`
+	Numero              *int32   `json:"numero,omitempty"`
+	Foto                *string  `json:"foto,omitempty"`
+	Mxon                *int32   `json:"mxon,omitempty"`
+	Datanascimento      *string  `json:"datanascimento,omitempty"`
+	Altura              *float64 `json:"altura,omitempty"`
+	Titulosconquistados *int32   `json:"titulosconquistados,omitempty"`
+	Video               *string  `json:"video,omitempty"`
+	Fotorecente         *string  `json:"fotorecente,omitempty"`
+	Galeriafotoss       *string  `json:"galeriafotoss,omitempty"`
+	Status              string   `json:"status"`
 }
 
 type Query struct {
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
+type ResultadoEtapas struct {
+	ID      string   `json:"id"`
+	Piloto  *Pilotos `json:"piloto,omitempty"`
+	Posicao int32    `json:"posicao"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type Tipos struct {
+	ID       string  `json:"id"`
+	Nome     string  `json:"nome"`
+	Multiplo float64 `json:"multiplo"`
 }
+

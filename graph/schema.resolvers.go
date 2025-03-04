@@ -7,25 +7,230 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/kauewa/graphql_crossxhub/graph/db"
 	"github.com/kauewa/graphql_crossxhub/graph/model"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// Pilotos is the resolver for the pilotos field.
+func (r *queryResolver) Pilotos(ctx context.Context, input *model.FiltrosPilotos) ([]*model.Pilotos, error) {
+	query := "SELECT * FROM crossxhub.pilotos"
+	if input.ID != nil {
+		query += fmt.Sprintf(" WHERE id = %s", *input.ID)
+	} else if input.Nome != nil {
+		query += fmt.Sprintf(" WHERE nome = '%s'", *input.Nome)
+	} else if input.Equipe != nil {
+		query += fmt.Sprintf(" WHERE idequipe = %v", *input.Equipe)
+	} else if input.Pais != nil {
+		query += fmt.Sprintf(" WHERE idpais = %v", *input.Pais)
+	} else if input.Numero != nil {
+		query += fmt.Sprintf(" WHERE numberplate = %v", *input.Numero)
+	}
+
+	fmt.Println(query)
+	rows, err := db.QueryDB(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var pilotos []*model.Pilotos
+	var equipesids []*interface{}
+	var paisesids []*interface{}
+	for rows.Next() {
+		var idpais interface{}
+		var idequipe interface{}
+		var piloto model.Pilotos
+		err := rows.Scan(&piloto.ID, &piloto.Nome, &idpais, &piloto.Numero, &piloto.Foto, &piloto.Mxon, &piloto.Datanascimento, &piloto.Altura, &idequipe, &piloto.Titulosconquistados, &piloto.Video, &piloto.Fotorecente, &piloto.Galeriafotoss, &piloto.Status)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		equipesids = append(equipesids, &idequipe)
+		paisesids = append(paisesids, &idpais)
+		pilotos = append(pilotos, &piloto)
+	}
+	model.Iterar_Equipes_Paises_pilotos(equipesids, paisesids, pilotos)
+	return pilotos, nil
 }
 
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+// Campeonatos is the resolver for the campeonatos field.
+func (r *queryResolver) Campeonatos(ctx context.Context, input *model.FiltrosCampeonatos) ([]*model.Campeonatos, error) {
+	start := time.Now()
+	query := "SELECT * FROM crossxhub.campeonatos"
+
+	if input.ID != nil {
+		query += fmt.Sprintf(" WHERE id = %s", *input.ID)
+	} else if input.Nome != nil {
+		query += fmt.Sprintf(" WHERE nome = '%s'", *input.Nome)
+	} else if input.Pais != nil {
+		query += fmt.Sprintf(" WHERE idpais = %v", *input.Pais)
+	}
+	fmt.Println(query)
+	rows, err := db.QueryDB(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var campeonatos []*model.Campeonatos
+	var paisesid []*interface{}
+	for rows.Next() {
+		var campeonato model.Campeonatos
+		var idpais interface{}
+		err := rows.Scan(&campeonato.ID, &campeonato.Nome, &idpais)
+		if err != nil {
+			return nil, err
+		}
+		paisesid = append(paisesid, &idpais)
+		query_etapas := fmt.Sprintf("SELECT id, nome, idtipo, data, video FROM crossxhub.etapas WHERE idcampeonato = %s", campeonato.ID)
+		fmt.Println(query_etapas)
+		rows_etapas, err := db.QueryDB(query_etapas)
+		if err != nil {
+			return nil, err
+		}
+		defer rows_etapas.Close()
+		var tiposid []*interface{}
+		var etapas []*model.Etapas
+		for rows_etapas.Next() {
+			var idtipo interface{}
+			var etapa model.Etapas
+			err := rows_etapas.Scan(&etapa.ID, &etapa.Nome, &idtipo, &etapa.Data, &etapa.Video)
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+			tiposid = append(tiposid, &idtipo)
+
+			etapa.GetResults()
+			etapas = append(etapas, &etapa)
+		}
+		model.Iterar_tipos_etapas(tiposid, etapas)
+		campeonato.Etapas = etapas
+		campeonatos = append(campeonatos, &campeonato)
+	}
+	model.Iterar_Paises_campeonatos(paisesid, campeonatos)
+	elapsed := time.Since(start)
+	fmt.Printf("Tempo de execução: %s\n", elapsed)
+	return campeonatos, nil
 }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+// Etapas is the resolver for the etapas field.
+func (r *queryResolver) Etapas(ctx context.Context, input *model.FiltrosEtapas) ([]*model.Etapas, error) {
+	query := "SELECT id, nome, idtipo, data, video FROM crossxhub.etapas"
+
+	if input.ID != nil {
+		query += fmt.Sprintf(" WHERE id = %s", *input.ID)
+	} else if input.Nome != nil {
+		query += fmt.Sprintf(" WHERE nome = '%s'", *input.Nome)
+	} else if input.Campeonato != nil {
+		query += fmt.Sprintf(" WHERE idcampeonato = %v", *input.Campeonato)
+	} else if input.Tipos != nil {
+		query += fmt.Sprintf(" WHERE idtipo = %v", *input.Tipos)
+	}
+
+	fmt.Println(query)
+	rows, err := db.QueryDB(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var etapas []*model.Etapas
+	var tiposid []*interface{}
+	for rows.Next() {
+		var idtipo interface{}
+		var etapa model.Etapas
+		err := rows.Scan(&etapa.ID, &etapa.Nome, &idtipo, &etapa.Data, &etapa.Video)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		tiposid = append(tiposid, &idtipo)
+
+		etapa.GetResults()
+		etapas = append(etapas, &etapa)
+	}
+	model.Iterar_tipos_etapas(tiposid, etapas)
+	return etapas, nil
+}
+
+// Equipes is the resolver for the equipes field.
+func (r *queryResolver) Equipes(ctx context.Context, input *model.FiltrosEquipes) ([]*model.Equipes, error) {
+	query := "SELECT id, nome, idmoto, idpais FROM crossxhub.equipes"
+	if input.ID != nil {
+		query += fmt.Sprintf(" WHERE id = %s", *input.ID)
+	} else if input.Nome != nil {
+		query += fmt.Sprintf(" WHERE nome = '%s'", *input.Nome)
+	} else if input.Moto != nil {
+		query += fmt.Sprintf(" WHERE idmoto = %v", *input.Moto)
+	} else if input.Pais != nil {
+		query += fmt.Sprintf(" WHERE idpais = %v", *input.Pais)
+	} else if input.Campeonato != nil {
+		query += fmt.Sprintf(" WHERE idcampeonato = %v", *input.Campeonato)
+	}
+
+	fmt.Println(query)
+	rows, err := db.QueryDB(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var equipes []*model.Equipes
+	var motosids []*interface{}
+	var paisesids []*interface{}
+	for rows.Next() {
+		var idmoto, idpais interface{}
+		var equipe model.Equipes
+
+		err := rows.Scan(&equipe.ID, &equipe.Nome, &idmoto, &idpais)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("%T\n", idmoto)
+		motosids = append(motosids, &idmoto)
+		paisesids = append(paisesids, &idpais)
+		equipes = append(equipes, &equipe)
+	}
+	model.Iterar_Moto_Pais_equipes(motosids, paisesids, equipes)
+	return equipes, nil
+}
+
+// Motos is the resolver for the motos field.
+func (r *queryResolver) Motos(ctx context.Context, input *model.FiltrosMotos) ([]*model.Motos, error) {
+	query := "SELECT * FROM crossxhub.motos"
+
+	if input.ID != nil {
+		query += fmt.Sprintf(" WHERE id = %v", *input.ID)
+	} else if input.Nome != nil {
+		query += fmt.Sprintf(" WHERE nome = '%s'", *input.Nome)
+	}
+	fmt.Println(query)
+	rows, err := db.QueryDB(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var motos []*model.Motos
+	for rows.Next() {
+		var moto model.Motos
+		err := rows.Scan(&moto.ID, &moto.Nome, &moto.Foto)
+		if err != nil {
+			return nil, err
+		}
+		// Verifica se os filtros foram fornecidos e se o moto atende aos critérios
+		if input.ID != nil && *input.ID != moto.ID || input.Nome != nil && *input.Nome != moto.Nome {
+			continue
+		}
+
+		motos = append(motos, &moto)
+	}
+	if len(motos) == 0 {
+		return nil, fmt.Errorf("no motos found")
+	}
+	return motos, nil
+}
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

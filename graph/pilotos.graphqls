@@ -1,0 +1,30 @@
+type Motos {
+    id: ID!
+    nome: String!
+    foto: String!
+}
+
+type Equipes {
+    id: ID!
+    nome: String!
+    moto: Motos
+    pais: Pais
+    campeonato: Campeonatos
+}
+
+type Pilotos {
+    id: ID!
+    nome: String!
+    equipe: Equipes
+    pais: Pais
+    numero: Int
+    foto: String
+    mxon: Int
+    datanascimento: String
+    altura: Float
+    titulosconquistados: Int
+    video: String
+    fotorecente: String
+    galeriafotoss: String
+    status: String!
+}
